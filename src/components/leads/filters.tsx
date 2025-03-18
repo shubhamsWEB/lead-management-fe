@@ -10,6 +10,7 @@ import Button from '../common/button';
 
 interface LeadFiltersProps {
   filters: LeadFiltersType;
+  searchTerm: string;
   onFilterChange: (filters: LeadFiltersType) => void;
   onSearchChange: (search: string) => void;
   onClearFilters: () => void;
@@ -22,6 +23,7 @@ export default function LeadFilters({
   onSearchChange,
   onClearFilters,
   setPage,
+  searchTerm,
 }: LeadFiltersProps) {
   const [showFilterPanel, setShowFilterPanel] = React.useState(false);
 
@@ -60,7 +62,7 @@ export default function LeadFilters({
         <div className="flex-grow">
           <Input
             placeholder="Search by lead's name, email or company name"
-            value={filters.search}
+            value={searchTerm}
             onChange={(e) => onSearchChange(e.target.value)}
             leftIcon={<MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />}
             className="w-full"

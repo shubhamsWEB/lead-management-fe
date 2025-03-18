@@ -10,4 +10,9 @@ const register = (params:any) => ({
   data:{...params}
 });
 
-export { login, register };
+const logout = () => ({
+  url: `/auth/logout`,
+  method: "get",
+});
+
+export { login, register, logout };

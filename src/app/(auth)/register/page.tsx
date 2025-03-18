@@ -29,6 +29,7 @@ export default function RegisterPage() {
   const password = watch('password');
 
   const onSubmit = async (data: RegisterFormData) => {
+    console.log("🚀 ~ onSubmit ~ data:", data);
     try {
       const success = await registerUser({name: data.name, email: data.email, password: data.password, confirmPassword: data.confirmPassword});
       if (success) {

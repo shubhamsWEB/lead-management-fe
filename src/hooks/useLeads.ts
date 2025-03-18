@@ -1,7 +1,8 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { apiGetAllLeads, apiCreateLead, apiUpdateLead, apiDeleteLead, apiExportLeads } from '../services/utils/apiHelperClient';
 import { Lead, LeadFilters, LeadFormData, PaginationState } from '../lib/types';
 import { useSnackbar } from '@/contexts/snackbarContext';
+import { useDebounce } from './useDebounce';
 /**
  * Custom hook for managing leads data and operations
  */
@@ -22,12 +23,23 @@ export function useLeads() {
     totalPages: 0,
   });
   
+  // Search term state (for immediate UI updates)
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
+  
   // Filtering and sorting state
   const [filters, setFilters] = useState<LeadFilters>({
     search: '',
     sort: 'updatedAt',
     sortOrder: 'desc',
   });
+
+  // Update filters when debounced search term changes
+  useEffect(() => {
+    setFilters(prev => ({ ...prev, search: debouncedSearchTerm }));
+    // Reset to first page when search term changes
+    setPagination(prev => ({ ...prev, page: 1 }));
+  }, [debouncedSearchTerm]);
 
   /**
    * Fetch leads with current pagination and filters
@@ -211,12 +223,10 @@ export function useLeads() {
   }, [leads, selectedLeads.length]);
 
   /**
-   * Set search filter
+   * Set search filter (updates immediately for UI, but API calls are debounced)
    */
   const setSearchFilter = useCallback((search: string) => {
-    setFilters(prev => ({ ...prev, search }));
-    // Reset to first page when searching
-    setPagination(prev => ({ ...prev, page: 1 }));
+    setSearchTerm(search);
   }, []);
 
   /**
@@ -240,6 +250,7 @@ export function useLeads() {
     pagination,
     filters,
     selectedLeads,
+    searchTerm,
     fetchLeads,
     createLead,
     updateLead,

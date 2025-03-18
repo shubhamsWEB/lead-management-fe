@@ -1,4 +1,4 @@
-import { login, register } from "../configs/auth";
+import { login, register, logout } from "../configs/auth";
 import RequestHandler from "../../requestsHandler";
 
 const loginService = (params:any) =>
@@ -16,4 +16,12 @@ const registerService = (params:any) =>
     .catch((error: any) => {
       throw error;
     });
-export { loginService, registerService };
+
+const logoutService = () =>
+  new RequestHandler("apiServer", logout())
+    .call()
+    .then((data: any) => ({ data: data }))
+    .catch((error: any) => {
+      throw error;
+    });
+export { loginService, registerService, logoutService };

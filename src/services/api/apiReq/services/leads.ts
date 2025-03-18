@@ -48,7 +48,7 @@ const updateLeadService = (params: any) =>
     });
 
 const deleteLeadService = (params: any) =>
-  new RequestHandler("apiServer", deleteLead(filterEmptyParams(params)))
+  new RequestHandler("apiServer", deleteLead(params))
     .call()
     .then((data: any) => data)
     .catch((error: any) => {

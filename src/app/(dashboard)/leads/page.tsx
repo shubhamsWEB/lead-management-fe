@@ -30,6 +30,7 @@ export default function LeadsPage() {
     setFilters,
     setPage,
     setLimit,
+    searchTerm,
   } = useLeads();
 
   // Local state for UI interactions
@@ -157,6 +158,7 @@ export default function LeadsPage() {
         onSearchChange={setSearchFilter}
         onClearFilters={handleClearFilters}
         setPage={setPage}
+        searchTerm={searchTerm}
       />
 
       {/* Leads count info */}

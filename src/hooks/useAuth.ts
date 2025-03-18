@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import api from '../lib/api';
-import { apiLogin, apiRegister, apiGetMe } from '../services/utils/apiHelperClient';
+import { apiLogin, apiRegister, apiGetMe, apiLogout } from '../services/utils/apiHelperClient';
 import { AuthState, LoginFormData, RegisterFormData, User } from '../lib/types';
 import { setToken, getToken, removeToken } from '../lib/utils';
 import { useSnackbar } from '@/contexts/snackbarContext';
@@ -80,6 +80,8 @@ export function useAuth() {
    * Register function
    */
   const register = useCallback(async (data: RegisterFormData) => {
+    console.log("🚀 ~ register ~ data:", data);
+
     try {
       setState(prev => ({ ...prev, isLoading: true }));
       // const response = await api.register(data);
@@ -107,7 +109,7 @@ export function useAuth() {
    */
   const logout = useCallback(async () => {
     try {
-      await api.logout();
+      await apiLogout();
       removeToken();
     } catch (error) {
       console.error('Logout error:', error);

@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '@/hooks/useAuth';
-import { ApiError, LoginFormData } from '@/lib/types';
+import { LoginFormData } from '@/lib/types';
 import Input from '@/components/common/input';
 import Button from '@/components/common/button';
 import { useSnackbar } from '@/contexts/snackbarContext';

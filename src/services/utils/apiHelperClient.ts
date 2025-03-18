@@ -54,3 +54,8 @@ export const apiGetMe = async () => {
   }).then((res) => res.json());
 };
 
+export const apiLogout = async () => {
+  return fetch(`/api/auth/logout`, {
+    method: "POST",
+  }).then((res) => res.json());
+};

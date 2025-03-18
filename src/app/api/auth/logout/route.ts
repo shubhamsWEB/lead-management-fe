@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { registerService } from "@/services/api/apiReq/services/auth";
+import { logoutService } from "@/services/api/apiReq/services/auth";
 
 export async function POST(request: NextRequest) {
-  const data = await request.json();
   try {
-    const response = await registerService(data);
+    const response = await logoutService();
     return NextResponse.json(response);
   } catch (error) {
     console.log("🚀 ~ POST ~ error:", error);
