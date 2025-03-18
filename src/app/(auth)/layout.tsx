@@ -1,47 +1,37 @@
 'use client';
 
 import React, { useEffect } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/hooks/useAuth';
-import { SnackbarProvider } from '@/contexts/snackbarContext';
-import ErrorBoundary from '@/components/common/errorBoundary';
-
+// import { useAuth } from '@/hooks/useAuth';
 export default function AuthLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return (
-    <SnackbarProvider>
-      <AuthLayoutContent>{children}</AuthLayoutContent>
-    </SnackbarProvider>
-  );
-}
-
-function AuthLayoutContent({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, isLoading } = useAuth();
+  // const { isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
 
   // Redirect to dashboard if already authenticated
-  useEffect(() => {
-    if (!isLoading && isAuthenticated) {
-      router.push('/leads');
-    }
-  }, [isLoading, isAuthenticated, router]);
+  // useEffect(() => {
+  //   if (!isLoading && isAuthenticated) {
+  //     router.push('/leads');
+  //   }
+  // }, [isLoading, isAuthenticated, router]);
 
   // Show loading while checking auth status
-  if (isLoading) {
-    return (
-      <div className="flex h-screen w-full items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-t-2 border-purple-600"></div>
-      </div>
-    );
-  }
+  // if (isLoading) {
+  //   return (
+  //     <div className="flex h-screen w-full items-center justify-center">
+  //       <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-t-2 border-purple-600"></div>
+  //     </div>
+  //   );
+  // }
 
   // If already authenticated, don't render content
-  if (isAuthenticated) {
-    return null;
-  }
+  // if (isAuthenticated) {
+  //   return null;
+  // }
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
@@ -56,9 +46,7 @@ function AuthLayoutContent({ children }: { children: React.ReactNode }) {
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
-          <ErrorBoundary>
             {children}
-          </ErrorBoundary>
         </div>
       </div>
     </div>

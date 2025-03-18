@@ -12,14 +12,20 @@ const authenticationInfo = async (request: Request) => {
 
 export async function POST(request: Request) {
     const data = await request.json()
-    const headers =await authenticationInfo(request);
+    const headers = await authenticationInfo(request);
     HandleRequest.setHeader(headers?.requestHeader);
     try {
       const response = await exportLeadsService(data);
       
-      return NextResponse.json(response?.data);
+      // Return the CSV data with appropriate headers
+      return new NextResponse(response, {
+        headers: {
+          'Content-Type': 'text/csv',
+          'Content-Disposition': `attachment; filename="leads-export-${new Date().toISOString().split('T')[0]}.csv"`
+        }
+      });
     } catch (error) {
       console.log("🚀 ~ POST ~ error:", error);
-      return NextResponse.json(error , { status: 400 });
+      return NextResponse.json(error, { status: 400 });
     }
 }

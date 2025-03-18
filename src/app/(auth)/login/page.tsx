@@ -5,18 +5,15 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
-import { useAuth } from '@/hooks/useAuth';
 import { LoginFormData } from '@/lib/types';
 import Input from '@/components/common/input';
 import Button from '@/components/common/button';
-import { useSnackbar } from '@/contexts/snackbarContext';
+import { apiLogin } from '@/services/utils/apiHelperClient';
 
 export default function LoginPage() {
-  const { login } = useAuth();
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
-  const { showSnackbar } = useSnackbar();
-  
+  const [error, setError] = useState<string | null>(null);
   const {
     register,
     handleSubmit,
@@ -25,13 +22,22 @@ export default function LoginPage() {
 
   const onSubmit = async (data: LoginFormData) => {
     try {
-      const success = await login({email: data.email, password: data.password});
-      console.log("🚀 ~ onSubmit ~ success:", success);
-      if (success) {
+      // const success = await login({email: data.email, password: data.password});
+      const response = await apiLogin({ email: data.email, password: data.password });
+      console.log("🚀 ~ onSubmit ~ response:", response);
+      if (response.success) {
+        document.cookie = `token=${response.token}; path=/`;
         router.push('/leads');
+      } else {
+        setError(response.message);
+        console.error('Login failed. Please try again.');
       }
     } catch (error) {
-      console.error('Login error:', error);
+      if (error instanceof Error) {
+        setError(error.message);
+      } else {
+        console.error('Login error:', error);
+      }
     }
   };
 
@@ -46,7 +52,7 @@ export default function LoginPage() {
           create a new account
         </Link>
       </p>
-
+      {error && <div className="text-red-500 text-center bg-red-100 p-2 rounded-md">{error}</div>}
       <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
         <div>
           <label htmlFor="email" className="block text-sm font-medium text-gray-700">

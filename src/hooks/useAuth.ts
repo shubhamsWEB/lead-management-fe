@@ -1,13 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import api from '../lib/api';
 import { apiLogin, apiRegister, apiGetMe, apiLogout } from '../services/utils/apiHelperClient';
 import { AuthState, LoginFormData, RegisterFormData, User } from '../lib/types';
 import { setToken, getToken, removeToken } from '../lib/utils';
-import { useSnackbar } from '@/contexts/snackbarContext';
+// import { useSnackbar } from '@/contexts/snackbarContext';
 export function useAuth() {
   const router = useRouter();
-  const { showSnackbar } = useSnackbar();
+  // const { showSnackbar } = useSnackbar();
   const [state, setState] = useState<AuthState>({
     user: null,
     token: null,
@@ -27,7 +26,6 @@ export function useAuth() {
         }
 
         // Try to get current user with the token
-        // const response = await api.getCurrentUser();
         const response = await apiGetMe();
         if (response.success) {
           setState({
@@ -64,13 +62,13 @@ export function useAuth() {
           isAuthenticated: true,
           isLoading: false,
         });
-        showSnackbar('Login successful', 'success');
+        // showSnackbar('Login successful', 'success');
         return true;
       }
-      showSnackbar(`${response?.message}`, 'error');
+      // showSnackbar(`${response?.message}`, 'error');
       return false;
     } catch (error) {
-      showSnackbar(`Error creating lead: ${error instanceof Error ? error.message : 'Unknown error'}`, 'error');
+      // showSnackbar(`Error creating lead: ${error instanceof Error ? error.message : 'Unknown error'}`, 'error');
       setState(prev => ({ ...prev, isLoading: false }));
       throw error;
     }

@@ -2,21 +2,9 @@ import { getAllLeads, getLeadById, createLead, updateLead, deleteLead, exportLea
 import RequestHandler from "../../requestsHandler";
 
 // Helper function to filter out empty values from params
-const filterEmptyParams = (params: any) => {
-  if (!params) return params;
-  
-  const filteredParams = Object.entries(params).reduce((acc, [key, value]) => {
-    if (value !== '' && value !== null && value !== undefined) {
-      acc[key] = value;
-    }
-    return acc;
-  }, {} as Record<string, any>);
-  
-  return filteredParams;
-};
 
 const getAllLeadsService = (params: any) =>
-  new RequestHandler("apiServer", getAllLeads(filterEmptyParams(params)))
+  new RequestHandler("apiServer", getAllLeads(params))
     .call()
     .then((data: any) => ({ data: data }))
     .catch((error: any) => {
@@ -24,7 +12,7 @@ const getAllLeadsService = (params: any) =>
     });
 
 const getLeadByIdService = (params: any) =>
-  new RequestHandler("apiServer", getLeadById(filterEmptyParams(params)))
+  new RequestHandler("apiServer", getLeadById(params))
     .call()
     .then((data: any) => ({ data: data }))
     .catch((error: any) => {
@@ -32,7 +20,7 @@ const getLeadByIdService = (params: any) =>
     });
 
 const createLeadService = (params: any) =>
-  new RequestHandler("apiServer", createLead(filterEmptyParams(params)))
+  new RequestHandler("apiServer", createLead(params))
     .call()
     .then((data: any) => ({ data: data }))
     .catch((error: any) => {
@@ -40,7 +28,7 @@ const createLeadService = (params: any) =>
     });
 
 const updateLeadService = (params: any) =>
-  new RequestHandler("apiServer", updateLead(filterEmptyParams(params)))
+  new RequestHandler("apiServer", updateLead(params))
     .call()
     .then((data: any) => ({ data: data }))
     .catch((error: any) => {
@@ -56,7 +44,7 @@ const deleteLeadService = (params: any) =>
     });
 
 const exportLeadsService = (params: any) =>
-  new RequestHandler("apiServer", exportLeads(filterEmptyParams(params)))
+  new RequestHandler("apiServer", exportLeads(params))
     .call()
     .then((data: any) => data)
     .catch((error: any) => {

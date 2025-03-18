@@ -5,7 +5,7 @@ export async function POST(request: NextRequest) {
   const { email, password } = await request.json();
   try {
     const response = await loginService({ email, password });
-    return NextResponse.json(response);
+    return NextResponse.json(response?.data);
   } catch (error) {
     console.log("🚀 ~ POST ~ error:", error);
     return NextResponse.json(error, { status: 400 });

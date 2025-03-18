@@ -28,10 +28,19 @@ export const apiDeleteLead = async (data: any) => {
 };
 
 export const apiExportLeads = async (data: any) => {
-  return fetch(`/api/leads/export`, {
+  const response = await fetch(`/api/leads/export`, {
     method: "POST",
     body: JSON.stringify(data),
-  }).then((res) => res.json());
+    headers: {
+      'Content-Type': 'application/json',
+    }
+  });
+  
+  if (!response.ok) {
+    throw new Error('Failed to export leads');
+  }
+  
+  return response.blob();
 };
 
 export const apiLogin = async (data: any) => {

@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { apiGetAllLeads, apiCreateLead, apiUpdateLead, apiDeleteLead, apiExportLeads } from '../services/utils/apiHelperClient';
 import { Lead, LeadFilters, LeadFormData, PaginationState } from '../lib/types';
 import { useSnackbar } from '@/contexts/snackbarContext';
@@ -14,6 +14,9 @@ export function useLeads() {
   // Loading and error states
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  
+  // Track if filters were updated by the debounced search term
+  const filtersUpdatedRef = useRef(false);
   
   // Pagination state
   const [pagination, setPagination] = useState<PaginationState>({
@@ -36,7 +39,14 @@ export function useLeads() {
 
   // Update filters when debounced search term changes
   useEffect(() => {
-    setFilters(prev => ({ ...prev, search: debouncedSearchTerm }));
+    setFilters(prev => {
+      // Only mark as updated if the search term actually changed
+      if (prev.search !== debouncedSearchTerm) {
+        filtersUpdatedRef.current = true;
+      }
+      return { ...prev, search: debouncedSearchTerm };
+    });
+    
     // Reset to first page when search term changes
     setPagination(prev => ({ ...prev, page: 1 }));
   }, [debouncedSearchTerm]);
@@ -242,6 +252,12 @@ export function useLeads() {
   const setLimit = useCallback((limit: number) => {
     setPagination(prev => ({ ...prev, limit, page: 1 }));
   }, []);
+
+  useEffect(() => {
+    fetchLeads();
+    // Reset the flag after fetching
+    filtersUpdatedRef.current = false;
+  }, [pagination.page, pagination.limit, filters.sort, filters.sortOrder, filters.stage, filters.engaged, filters.search]);
 
   return {
     leads,

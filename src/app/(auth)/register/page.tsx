@@ -5,20 +5,14 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
-import { useAuth } from '@/hooks/useAuth';
-import { ApiError, RegisterFormData } from '@/lib/types';
+import { RegisterFormData } from '@/lib/types';
 import Input from '@/components/common/input';
 import Button from '@/components/common/button';
-import { useApiErrorHandler } from '@/lib/errorUtils';
-import { useSnackbar } from '@/contexts/snackbarContext';
-import { formatApiError } from '@/lib/errorUtils';
-
+import { apiRegister } from '@/services/utils/apiHelperClient';
 export default function RegisterPage() {
-  const { register: registerUser } = useAuth();
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
-  const { showSnackbar } = useSnackbar();
-  
+  const [error, setError] = useState<string | null>(null);
   const {
     register,
     handleSubmit,
@@ -31,15 +25,18 @@ export default function RegisterPage() {
   const onSubmit = async (data: RegisterFormData) => {
     console.log("🚀 ~ onSubmit ~ data:", data);
     try {
-      const success = await registerUser({name: data.name, email: data.email, password: data.password, confirmPassword: data.confirmPassword});
-      if (success) {
+      const response = await apiRegister({name: data.name, email: data.email, password: data.password, confirmPassword: data.confirmPassword});
+      console.log("🚀 ~ onSubmit ~ response:", response);
+      if (response.success) {
+        document.cookie = `token=${response.token}; path=/`;
         router.push('/leads');
+      } else {
+        setError(response.message);
       }
     } catch (error) {
-      if (error) {
-        showSnackbar(formatApiError(error as ApiError), 'error');
+      if (error instanceof Error) {
+        setError(error.message);
       } else {
-        showSnackbar('Registration failed. Please try again.', 'error');
         console.error('Registration error:', error);
       }
     }
@@ -56,7 +53,7 @@ export default function RegisterPage() {
           sign in to your existing account
         </Link>
       </p>
-
+      {error && <div className="text-red-500 text-center bg-red-100 p-2 rounded-md">{error}</div>}
       <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
         <div>
           <label htmlFor="name" className="block text-sm font-medium text-gray-700">

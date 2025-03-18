@@ -44,7 +44,7 @@ export default function LeadsPage() {
   // Fetch leads on initial load
   useEffect(() => {
     fetchLeads();
-  }, [fetchLeads]);
+  }, []);
 
   // Handle adding a new lead
   const handleAddLead = async (data: LeadFormData) => {
