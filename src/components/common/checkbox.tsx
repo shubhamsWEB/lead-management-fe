@@ -6,11 +6,6 @@ interface CheckboxProps extends React.InputHTMLAttributes<HTMLInputElement> {
   error?: string;
 }
 
-/**
- * Checkbox component with optional label
- * 
- * This matches the checkboxes in the lead table for selecting rows
- */
 const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
   ({ className, label, error, ...props }, ref) => {
     return (

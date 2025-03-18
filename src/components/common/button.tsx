@@ -10,12 +10,6 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   fullWidth?: boolean;
 }
 
-/**
- * Button component with different variants and sizes
- * 
- * Matches the button styles in the UI mockup, including the Add Lead 
- * and Export All buttons
- */
 export default function Button({
   children,
   className,

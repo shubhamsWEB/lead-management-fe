@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
-import api from '../lib/api';
+import { apiGetAllLeads, apiCreateLead, apiUpdateLead, apiDeleteLead, apiExportLeads } from '../services/utils/apiHelperClient';
 import { Lead, LeadFilters, LeadFormData, PaginationState } from '../lib/types';
-
+import { useSnackbar } from '@/contexts/snackbarContext';
 /**
  * Custom hook for managing leads data and operations
  */
@@ -9,7 +9,7 @@ export function useLeads() {
   // State for leads data
   const [leads, setLeads] = useState<Lead[]>([]);
   const [selectedLeads, setSelectedLeads] = useState<string[]>([]);
-  
+  const { showSnackbar } = useSnackbar();
   // Loading and error states
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -37,9 +37,9 @@ export function useLeads() {
       setLoading(true);
       setError(null);
       
-      const response = await api.getLeads(pagination.page, pagination.limit, filters);
+      const response = await apiGetAllLeads({page:pagination.page, limit:pagination.limit, ...filters});
       
-      if (response.success) {
+      if (response?.success) {
         setLeads(response.data || []);
         setPagination({
           page: response.pagination.page,
@@ -64,22 +64,36 @@ export function useLeads() {
       setLoading(true);
       setError(null);
       
-      const response = await api.createLead(data);
+      const response = await apiCreateLead(data);
       
-      if (response.success) {
-        // Refresh the lead list
+      // Check if the response indicates an error despite the 200 status code
+      if (response?.success === false) {
+        // This is an error response with a 200 status code
+        showSnackbar(response?.message, 'error');
+        setError('Failed to create lead');
+        return false;
+      }
+      
+      if (response?.success) {
+        // Add the new lead to the list and refresh
+        showSnackbar('Lead created successfully', 'success');
         await fetchLeads();
         return true;
       }
+      
+      // If we get here, something unexpected happened
+      showSnackbar('Failed to create lead', 'error');
       return false;
     } catch (error) {
+      // This will only catch network errors or other exceptions
+      showSnackbar(`Error creating lead: ${error instanceof Error ? error.message : 'Unknown error'}`, 'error');
       setError('Failed to create lead');
       console.error('Error creating lead:', error);
       return false;
     } finally {
       setLoading(false);
     }
-  }, [fetchLeads]);
+  }, [fetchLeads, showSnackbar]);
 
   /**
    * Update an existing lead
@@ -89,26 +103,29 @@ export function useLeads() {
       setLoading(true);
       setError(null);
       
-      const response = await api.updateLead(id, data);
+      const response = await apiUpdateLead({...data,id});
       
-      if (response.success) {
+      if (response?.success) {
         // Update the lead in the current list to avoid refetching
         setLeads(prevLeads => 
           prevLeads.map(lead => 
             lead._id === id ? { ...lead, ...response.data } : lead
           )
         );
+        showSnackbar('Lead updated successfully', 'success');
         return true;
       }
+      showSnackbar(response?.message || 'Failed to update lead', 'error');
       return false;
     } catch (error) {
+      showSnackbar(`Error updating lead: ${error instanceof Error ? error.message : 'Unknown error'}`, 'error');
       setError('Failed to update lead');
       console.error('Error updating lead:', error);
       return false;
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [showSnackbar]);
 
   /**
    * Delete a lead
@@ -118,24 +135,28 @@ export function useLeads() {
       setLoading(true);
       setError(null);
       
-      const response = await api.deleteLead(id);
+      const response = await apiDeleteLead(id);
+      console.log("🚀 ~ deleteLead ~ response:", response);
       
-      if (response.success) {
+      if (response?.success) {
         // Remove the lead from the current list
         setLeads(prevLeads => prevLeads.filter(lead => lead._id !== id));
         // Also remove from selected if selected
         setSelectedLeads(prev => prev.filter(leadId => leadId !== id));
+        showSnackbar('Lead deleted successfully', 'success');
         return true;
       }
+      showSnackbar(response?.message || 'Failed to delete lead', 'error');
       return false;
     } catch (error) {
+      showSnackbar(`Error deleting lead: ${error instanceof Error ? error.message : 'Unknown error'}`, 'error');
       setError('Failed to delete lead');
       console.error('Error deleting lead:', error);
       return false;
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [showSnackbar]);
 
   /**
    * Export leads as CSV
@@ -145,7 +166,7 @@ export function useLeads() {
       setLoading(true);
       setError(null);
       
-      const blob = await api.exportLeads();
+      const blob = await apiExportLeads({...pagination, ...filters});
       
       // Create a download link
       const url = window.URL.createObjectURL(blob);
@@ -156,15 +177,16 @@ export function useLeads() {
       link.click();
       document.body.removeChild(link);
       
+      showSnackbar('Leads exported successfully', 'success');
       return true;
     } catch (error) {
+      showSnackbar(`Error exporting leads: ${error instanceof Error ? error.message : 'Unknown error'}`, 'error');
       setError('Failed to export leads');
-      console.error('Error exporting leads:', error);
       return false;
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [pagination, filters, showSnackbar]);
 
   /**
    * Toggle lead selection

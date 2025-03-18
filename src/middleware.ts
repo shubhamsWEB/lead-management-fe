@@ -7,6 +7,7 @@ import type { NextRequest } from 'next/server';
 export function middleware(request: NextRequest) {
   // Get token from localStorage
   const token = request.cookies.get('token')?.value;
+  console.log("🚀 ~ middleware ~ token:", token);
   
   // Get the pathname
   const { pathname } = request.nextUrl;

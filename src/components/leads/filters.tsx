@@ -16,11 +16,6 @@ interface LeadFiltersProps {
   setPage: (page: number) => void;
 }
 
-/**
- * Lead filters component with search and filter options
- * 
- * This matches the search and filter UI in the mockup
- */
 export default function LeadFilters({
   filters,
   onFilterChange,

@@ -32,8 +32,8 @@ export default function Dialog({
 
   return (
     <Transition appear show={isOpen} as={Fragment}>
-      <HeadlessDialog as="div" className="relative z-10" onClose={onClose}>
-        {/* Background overlay */}
+      <HeadlessDialog as="div" className="relative" onClose={onClose}>
+        {/* Background overlay - changed to glassmorphism */}
         <Transition.Child
           as={Fragment}
           enter="ease-out duration-300"
@@ -43,7 +43,7 @@ export default function Dialog({
           leaveFrom="opacity-100"
           leaveTo="opacity-0"
         >
-          <div className="fixed inset-0 bg-black bg-opacity-25" />
+          <div className="fixed inset-0 backdrop-blur-xs bg-white/40 dark:bg-black/40" />
         </Transition.Child>
 
         <div className="fixed inset-0 overflow-y-auto">
@@ -58,7 +58,7 @@ export default function Dialog({
               leaveTo="opacity-0 scale-95"
             >
               <HeadlessDialog.Panel 
-                className={`w-full ${maxWidthClasses[maxWidth]} transform overflow-hidden rounded-lg bg-white p-6 text-left align-middle shadow-xl transition-all`}
+                className={`w-full ${maxWidthClasses[maxWidth]} transform overflow-hidden rounded-lg bg-white/80 backdrop-blur-sm p-6 text-left align-middle shadow-xl transition-all`}
               >
                 <div className="flex items-center justify-between">
                   <HeadlessDialog.Title

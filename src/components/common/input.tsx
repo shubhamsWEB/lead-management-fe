@@ -9,11 +9,6 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   fullWidth?: boolean;
 }
 
-/**
- * Input component with label, error message, and icons
- * 
- * This matches the search input in the UI mockup
- */
 const Input = forwardRef<HTMLInputElement, InputProps>(
   ({ className, label, error, leftIcon, rightIcon, fullWidth = true, ...props }, ref) => {
     return (

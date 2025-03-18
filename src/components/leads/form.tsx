@@ -23,7 +23,6 @@ export default function LeadForm({
   onCancel,
   isSubmitting,
 }: LeadFormProps) {
-  const { showSnackbar } = useSnackbar();
   
   // Initialize the form with default values or existing lead data
   const {
@@ -53,12 +52,7 @@ export default function LeadForm({
     try {
       await onSubmit(data);
     } catch (error) {
-      if (error) {
-        showSnackbar(formatApiError(error as ApiError), 'error');
-      } else {
-        showSnackbar('An unexpected error occurred', 'error');
         console.error('Error submitting form:', error);
-      }
     }
   };
 

@@ -7,11 +7,6 @@ interface AvatarProps {
   size?: 'sm' | 'md' | 'lg';
 }
 
-/**
- * Avatar component that displays initials
- * 
- * Exactly matches the "EB", "AF", etc. avatars in the UI mockup
- */
 export default function Avatar({ initials, className, size = 'md' }: AvatarProps) {
   const sizeClasses = {
     sm: 'h-6 w-6 text-xs',

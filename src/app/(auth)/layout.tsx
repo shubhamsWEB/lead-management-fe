@@ -1,15 +1,24 @@
 'use client';
 
 import React, { useEffect } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { SnackbarProvider } from '@/contexts/snackbarContext';
+import ErrorBoundary from '@/components/common/errorBoundary';
+
 export default function AuthLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  return (
+    <SnackbarProvider>
+      <AuthLayoutContent>{children}</AuthLayoutContent>
+    </SnackbarProvider>
+  );
+}
+
+function AuthLayoutContent({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
 
@@ -47,9 +56,9 @@ export default function AuthLayout({
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
-          <SnackbarProvider>
+          <ErrorBoundary>
             {children}
-          </SnackbarProvider>
+          </ErrorBoundary>
         </div>
       </div>
     </div>

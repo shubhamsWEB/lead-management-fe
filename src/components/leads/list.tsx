@@ -1,9 +1,7 @@
 import React, { useState } from 'react';
 import { Lead } from '@/lib/types';
 import LeadItem from './item';
-import LeadOptions from './options';
 import Checkbox from '../common/checkbox';
-import Button from '../common/button';
 import Pagination from '../common/pagination';
 
 interface LeadListProps {
@@ -24,11 +22,6 @@ interface LeadListProps {
   onLimitChange: (limit: number) => void;
 }
 
-/**
- * Lead list component that renders the entire table of leads
- * 
- * This matches the table in the UI mockup
- */
 export default function LeadList({
   leads,
   selectedLeads,

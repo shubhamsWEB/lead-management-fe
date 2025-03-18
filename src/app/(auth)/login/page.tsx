@@ -9,9 +9,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { ApiError, LoginFormData } from '@/lib/types';
 import Input from '@/components/common/input';
 import Button from '@/components/common/button';
-import { useApiErrorHandler } from '@/lib/errorUtils';
 import { useSnackbar } from '@/contexts/snackbarContext';
-import { formatApiError } from '@/lib/errorUtils';
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -28,16 +26,12 @@ export default function LoginPage() {
   const onSubmit = async (data: LoginFormData) => {
     try {
       const success = await login({email: data.email, password: data.password});
+      console.log("🚀 ~ onSubmit ~ success:", success);
       if (success) {
         router.push('/leads');
       }
     } catch (error) {
-      if (error) {
-        showSnackbar(formatApiError(error as ApiError), 'error');
-      } else {
-        showSnackbar('Login failed. Please try again.', 'error');
-        console.error('Login error:', error);
-      }
+      console.error('Login error:', error);
     }
   };
 

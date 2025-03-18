@@ -7,11 +7,6 @@ interface BadgeProps {
   className?: string;
 }
 
-/**
- * Badge component for status indicators
- * 
- * Matches the "Not Engaged" and "Engaged" badges in the UI mockup
- */
 export default function Badge({ 
   children, 
   variant = 'default', 

@@ -9,8 +9,6 @@ import {
 import { 
   PencilIcon, 
   TrashIcon, 
-  EnvelopeIcon,
-  PhoneIcon,
   EllipsisVerticalIcon
 } from '@heroicons/react/24/outline';
 import { Lead } from '@/lib/types';
@@ -24,7 +22,7 @@ interface LeadOptionsProps {
 
 export default function LeadOptions({ lead, onEdit, onDelete }: LeadOptionsProps) {
   return (
-    <Menu as="div" className="relative inline-block text-left">
+    <Menu as="div" className="relative inline-block text-left" aria-label="Lead Options">
       <div>
         <MenuButton className="flex items-center text-gray-400 hover:text-gray-600">
           <span className="sr-only">Open options</span>
@@ -41,8 +39,10 @@ export default function LeadOptions({ lead, onEdit, onDelete }: LeadOptionsProps
         leaveFrom="transform opacity-100 scale-100"
         leaveTo="transform opacity-0 scale-95"
       >
-        <MenuItems className="absolute right-0 z-10 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
-          <div className="py-1">
+        <MenuItems className="absolute right-0 z-10 mt-2 w-56 origin-top-right rounded-md bg-white focus:outline-none p-[1px] shadow-lg border border-gray-200">
+          <div className="py-1 relative bg-white rounded-md">
+            <div className="absolute -top-2.5 right-3 w-4 h-4 bg-white transform rotate-45 border-t border-l border-gray-200"></div>
+            <div className="absolute -top-[3px] right-[13px] w-3 h-3 bg-white transform rotate-45"></div>
             <MenuItem>
               {({ active }) => (
                 <button
@@ -54,35 +54,6 @@ export default function LeadOptions({ lead, onEdit, onDelete }: LeadOptionsProps
                 >
                   <PencilIcon className="mr-3 h-5 w-5 text-gray-400" aria-hidden="true" />
                   Edit
-                </button>
-              )}
-            </MenuItem>
-
-            <MenuItem>
-              {({ active }) => (
-                <button
-                  onClick={() => window.location.href = `mailto:${lead.email}`}
-                  className={cn(
-                    active ? 'bg-gray-100 text-gray-900' : 'text-gray-700',
-                    'flex w-full items-center px-4 py-2 text-sm'
-                  )}
-                >
-                  <EnvelopeIcon className="mr-3 h-5 w-5 text-gray-400" aria-hidden="true" />
-                  Email
-                </button>
-              )}
-            </MenuItem>
-
-            <MenuItem>
-              {({ active }) => (
-                <button
-                  className={cn(
-                    active ? 'bg-gray-100 text-gray-900' : 'text-gray-700',
-                    'flex w-full items-center px-4 py-2 text-sm'
-                  )}
-                >
-                  <PhoneIcon className="mr-3 h-5 w-5 text-gray-400" aria-hidden="true" />
-                  Call
                 </button>
               )}
             </MenuItem>

@@ -117,3 +117,14 @@ export function getPaginationRange(
   
   return range;
 }
+export function setToken(token: string) {
+  localStorage.setItem('token', token);
+  document.cookie = `token=${token}; path=/; max-age=604800; SameSite=Strict; ${location.protocol === 'https:' ? 'Secure;' : ''}`;
+}
+export function getToken() {
+  return localStorage.getItem('token') || document.cookie.split('; ').find(row => row.startsWith('token='))?.split('=')[1];
+}
+export function removeToken() {
+  localStorage.removeItem('token');
+  document.cookie = 'token=; path=/; max-age=0; SameSite=Strict;';
+}

@@ -9,19 +9,13 @@ import LeadList from '@/components/leads/list';
 import LeadFilters from '@/components/leads/filters';
 import Dialog from '@/components/common/dialog';
 import LeadForm from '@/components/leads/form';
-import { useApiErrorHandler } from '@/lib/errorUtils';
-import { useSnackbar } from '@/contexts/snackbarContext';
-import { formatApiError } from '@/lib/errorUtils';
 
-/**
- * Leads page that implements the UI from the mockup
- */
+
 export default function LeadsPage() {
   // Get leads data and actions from our custom hook
   const {
     leads,
     loading,
-    error,
     pagination,
     filters,
     selectedLeads,
@@ -38,8 +32,6 @@ export default function LeadsPage() {
     setLimit,
   } = useLeads();
 
-  const { showSnackbar } = useSnackbar();
-
   // Local state for UI interactions
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -47,16 +39,6 @@ export default function LeadsPage() {
   const [currentLead, setCurrentLead] = useState<Lead | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Helper function to handle API errors
-  const handleApiError = (error: any) => {
-    console.log("🚀 ~ handleApiError ~ error:", error);
-    if (error && error.success === false) {
-      showSnackbar(formatApiError(error), 'error');
-    } else {
-      showSnackbar('An unexpected error occurred', 'error');
-      console.error('API Error:', error);
-    }
-  };
 
   // Fetch leads on initial load
   useEffect(() => {
@@ -70,10 +52,9 @@ export default function LeadsPage() {
       const success = await createLead(data);
       if (success) {
         setShowAddModal(false);
-        showSnackbar('Lead created successfully', 'success');
       }
     } catch (err) {
-      handleApiError(err);
+      console.log("🚀 ~ handleAddLead ~ err:", err);
     } finally {
       setIsSubmitting(false);
     }
@@ -94,10 +75,9 @@ export default function LeadsPage() {
       const success = await updateLead(currentLead._id, data);
       if (success) {
         setShowEditModal(false);
-        showSnackbar('Lead updated successfully', 'success');
       }
     } catch (err) {
-      handleApiError(err);
+      console.log("🚀 ~ handleUpdateLead ~ err:", err);
     } finally {
       setIsSubmitting(false);
     }
@@ -122,10 +102,9 @@ export default function LeadsPage() {
       const success = await deleteLead(currentLead._id);
       if (success) {
         setShowDeleteModal(false);
-        showSnackbar('Lead deleted successfully', 'success');
       }
     } catch (err) {
-      handleApiError(err);
+      console.log("🚀 ~ handleDeleteConfirm ~ err:", err);
     } finally {
       setIsSubmitting(false);
     }
@@ -136,8 +115,7 @@ export default function LeadsPage() {
     try {
       await exportLeads();
     } catch (err) {
-      showSnackbar('Failed to export leads', 'error');
-      console.error('Failed to export leads:', err);
+      console.log("🚀 ~ handleExportLeads ~ err:", err);
     }
   };
 
@@ -151,20 +129,20 @@ export default function LeadsPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 px-2 md:px-20">
       {/* Header with title and buttons */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-2xl font-bold text-gray-900">Leads</h1>
         <div className="mt-4 flex space-x-3 sm:mt-0">
           <Button
-            variant="primary"
+            variant="outline"
             leftIcon={<PlusIcon className="h-5 w-5" />}
             onClick={() => setShowAddModal(true)}
           >
             Add Lead
           </Button>
           <Button
-            variant="outline"
+            variant="primary"
             onClick={handleExportLeads}
           >
             Export All

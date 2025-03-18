@@ -12,11 +12,6 @@ interface PaginationProps {
   className?: string;
 }
 
-/**
- * Pagination component with page selection and items per page
- * 
- * Matches the pagination at the bottom of the leads table in the mockup
- */
 export default function Pagination({
   currentPage,
   totalPages,
@@ -29,7 +24,7 @@ export default function Pagination({
   const pageRange = getPaginationRange(currentPage, totalPages);
 
   return (
-    <div className={cn("flex items-center justify-between", className)}>
+    <div className={cn("grid grid-cols-3 xs:grid-cols-1", className)}>
       {/* Items per page selector */}
       {itemsPerPage && onItemsPerPageChange && (
         <div className="flex items-center text-sm text-gray-700">
