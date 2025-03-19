@@ -1,11 +1,8 @@
 import React from 'react';
 import { useForm } from 'react-hook-form';
-import { ApiError, Lead, LeadFormData, StageType } from '@/lib/types';
+import { Lead, LeadFormData } from '@/lib/types';
 import Input from '../common/input';
 import Button from '../common/button';
-import { useApiErrorHandler } from '@/lib/errorUtils';
-import { useSnackbar } from '@/contexts/snackbarContext';
-import { formatApiError } from '@/lib/errorUtils';
 
 interface LeadFormProps {
   lead?: Lead; // If provided, we're editing; otherwise, creating
@@ -49,8 +46,16 @@ export default function LeadForm({
 
   // Form submission handler
   const handleFormSubmit = async (data: LeadFormData) => {
+    console.log("🚀 ~ handleFormSubmit ~ data:", data);
     try {
-      await onSubmit(data);
+      // Remove empty fields from the data
+      const cleanedData = Object.fromEntries(
+        Object.entries(data).filter(([_, value]) => 
+          value !== undefined && value !== null && value !== ''
+        )
+      ) as LeadFormData;
+      
+      await onSubmit(cleanedData);
     } catch (error) {
         console.error('Error submitting form:', error);
     }

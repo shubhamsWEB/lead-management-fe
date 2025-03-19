@@ -29,7 +29,7 @@ export default function LeadFilters({
 
   // Handle filter changes
   const handleStageChange = (stage: StageType | '') => {
-    setPage(1);
+    // Set the entire filter object at once to avoid multiple state updates
     onFilterChange({ 
       ...filters, 
       stage: stage === '' ? undefined : stage as StageType,
@@ -37,7 +37,6 @@ export default function LeadFilters({
   };
 
   const handleEngagedChange = (engaged: boolean | null) => {
-    setPage(1);
     onFilterChange({ 
       ...filters, 
       engaged: engaged === null ? undefined : engaged,
@@ -47,7 +46,6 @@ export default function LeadFilters({
   const handleSortChange = (field: string) => {
     // If same field, toggle order, otherwise set new field with asc order
     const newOrder = field === filters.sort && filters.sortOrder === 'asc' ? 'desc' : 'asc';
-    setPage(1);
     onFilterChange({ 
       ...filters, 
       sort: field, 
