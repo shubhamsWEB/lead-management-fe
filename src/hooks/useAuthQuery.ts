@@ -73,12 +73,3 @@ export function useLogout() {
     },
   });
 }
-
-// Utility to get token
-export function getToken() {
-  if (typeof window === 'undefined') return null;
-  
-  return localStorage.getItem('token') || 
-         document.cookie.split('; ').find(row => row.startsWith('token='))?.split('=')[1] || 
-         null;
-} 
