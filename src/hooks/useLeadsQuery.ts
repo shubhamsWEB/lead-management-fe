@@ -8,12 +8,27 @@ import {
 } from '../services/utils/apiHelperClient';
 import { Lead, LeadFilters, LeadFormData, PaginationState } from '@/lib/types';
 
+// Create a stable identity for query keys
+const LEADS_KEY = 'leads';
+
 // Keys for React Query cache
 export const leadKeys = {
-  all: ['leads'] as const,
+  all: [LEADS_KEY] as const,
   lists: () => [...leadKeys.all, 'list'] as const,
-  list: (filters: LeadFilters, pagination: Partial<PaginationState>) => 
-    [...leadKeys.lists(), filters, pagination] as const,
+  list: (filters: LeadFilters, pagination: Partial<PaginationState>) => {
+    // Create a stable query key to prevent unnecessary refetching
+    const queryKey = {
+      type: 'list',
+      filters: {
+        ...filters,
+      },
+      pagination: {
+        page: pagination.page || 1,
+        limit: pagination.limit || 10,
+      }
+    };
+    return [LEADS_KEY, queryKey];
+  },
   details: () => [...leadKeys.all, 'detail'] as const,
   detail: (id: string) => [...leadKeys.details(), id] as const,
 };
@@ -36,9 +51,11 @@ export function useLeadsQuery(filters: LeadFilters, pagination: Partial<Paginati
         totalPages: data.pagination.totalPages,
       }
     }),
-    refetchOnMount: true,
+    // Set to false to prevent fetching on mount - we rely on initial render only
+    refetchOnMount: false,
     refetchOnWindowFocus: false,
-    staleTime: 1000, // 1 second
+    // Increased stale time to reduce unnecessary fetches
+    staleTime: 60 * 1000, // 1 minute
   });
 }
 
@@ -95,4 +112,4 @@ export function useExportLeadsMutation() {
     mutationFn: (params: { pagination: Partial<PaginationState>, filters: LeadFilters }) => 
       apiExportLeads({ ...params.pagination, ...params.filters }),
   });
-} 
+}

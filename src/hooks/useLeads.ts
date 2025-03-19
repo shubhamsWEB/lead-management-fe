@@ -4,6 +4,7 @@ import { useSnackbar } from '@/contexts/snackbarContext';
 import { useDebounce } from './useDebounce';
 import { useCreateLeadMutation, useUpdateLeadMutation, useDeleteLeadMutation, useExportLeadsMutation, useLeadsQuery, leadKeys } from './useLeadsQuery';
 import { useQueryClient } from '@tanstack/react-query';
+import { unstable_batchedUpdates as batchedUpdates } from 'react-dom';
 
 /**
  * Custom hook for managing leads data and operations
@@ -32,13 +33,19 @@ export function useLeads() {
     sortOrder: 'desc',
   });
   
+  // Create a stable query key that doesn't change on every render
+  const queryParams = useMemo(() => ({
+    filters,
+    pagination
+  }), [filters, pagination]);
+  
   // React Query hooks
   const { 
     data, 
     isLoading, 
     isError, 
     error: queryError 
-  } = useLeadsQuery(filters, pagination);
+  } = useLeadsQuery(queryParams.filters, queryParams.pagination);
   
   const createLeadMutation = useCreateLeadMutation();
   const updateLeadMutation = useUpdateLeadMutation();
@@ -47,15 +54,24 @@ export function useLeads() {
   
   const queryClient = useQueryClient();
   
+  // Batched state updates to prevent multiple API calls
+  const updateFiltersAndPagination = useCallback((newFilters: LeadFilters, newPaginationParams?: Partial<PaginationState>) => {
+    batchedUpdates(() => {
+      setFilters(newFilters);
+      if (newPaginationParams) {
+        setPagination(prev => ({ ...prev, ...newPaginationParams }));
+      }
+    });
+  }, []);
+  
   // Update filters when debounced search term changes
   useEffect(() => {
     if (debouncedSearchTerm !== filters.search) {
-      // Batch the state updates by updating both filters and pagination in one go
+      // Use the batched update function to prevent multiple API calls
       const newFilters = { ...filters, search: debouncedSearchTerm };
-      setFilters(newFilters);
-      setPagination(prev => ({ ...prev, page: 1 }));
+      updateFiltersAndPagination(newFilters, { page: 1 });
     }
-  }, [debouncedSearchTerm, filters]);
+  }, [debouncedSearchTerm, filters, updateFiltersAndPagination]);
   
   // Memoize leads data to avoid unnecessary re-renders
   const leads = useMemo(() => data?.leads || [], [data?.leads]);
@@ -82,6 +98,13 @@ export function useLeads() {
         response?.success ? 'success' : 'error'
       );
       
+      if (response?.success) {
+        // Explicitly refetch the current query to ensure UI is updated
+        queryClient.invalidateQueries({ 
+          queryKey: leadKeys.list(filters, pagination) 
+        });
+      }
+      
       return response?.success || false;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -89,7 +112,7 @@ export function useLeads() {
       console.error('Error creating lead:', error);
       return false;
     }
-  }, [createLeadMutation, showSnackbar]);
+  }, [createLeadMutation, showSnackbar, queryClient, filters, pagination]);
 
   /**
    * Update an existing lead
@@ -102,6 +125,12 @@ export function useLeads() {
         response?.success ? 'Lead updated successfully' : (response?.message || 'Failed to update lead'),
         response?.success ? 'success' : 'error'
       );
+      if (response?.success) {
+        // Explicitly refetch the current query to ensure UI is updated
+        queryClient.invalidateQueries({ 
+          queryKey: leadKeys.list(filters, pagination) 
+        });
+      }
       
       return response?.success || false;
     } catch (error) {
@@ -202,16 +231,12 @@ export function useLeads() {
     setPagination(prev => ({ ...prev, limit, page: 1 }));
   }, []);
 
-  // Replace the separate filter and pagination setters with combined functions
-  const setFilterAndPage = useCallback((newFilters: LeadFilters, page: number = 1) => {
-    // Update both states at once without manually invalidating the query
-    setFilters(newFilters);
-    setPagination(prev => ({ ...prev, page }));
-    
-    // Remove the manual invalidation
-    // The query will automatically refetch when the filters or pagination change
-    // because they're part of the query key
-  }, []);
+  /**
+   * Set filter options
+   */
+  const setFilterOptions = useCallback((newFilters: LeadFilters) => {
+    updateFiltersAndPagination(newFilters, { page: 1 });
+  }, [updateFiltersAndPagination]);
 
   return {
     leads,
@@ -228,9 +253,8 @@ export function useLeads() {
     toggleSelectLead,
     toggleSelectAll,
     setSearchFilter,
-    setFilters,
+    setFilters: setFilterOptions,
     setPage,
     setLimit,
-    setFilterAndPage,
   };
 }

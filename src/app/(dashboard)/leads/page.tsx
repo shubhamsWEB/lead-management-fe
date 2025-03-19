@@ -11,7 +11,8 @@ import LeadForm from '@/components/leads/form';
 import { useLeads } from '@/hooks/useLeads';
 import { useSnackbar } from '@/contexts/snackbarContext';
 
-export default function LeadsPage() {
+// Create React component
+function LeadsPageContent() {
   // Local state for UI interactions
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -231,4 +232,12 @@ export default function LeadsPage() {
       )}
     </div>
   );
+}
+
+// Use React.memo to prevent unnecessary re-renders
+const MemoizedLeadsPage = React.memo(LeadsPageContent);
+
+// Export the component
+export default function LeadsPage() {
+  return <MemoizedLeadsPage />;
 }
