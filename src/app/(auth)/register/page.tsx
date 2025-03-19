@@ -38,8 +38,10 @@ export default function RegisterPage() {
       });
       
       if (response.success) {
-        // Set the token
-        setToken(response.token);
+        // Only set the token on the client side
+        if (typeof window !== 'undefined') {
+          setToken(response.token);
+        }
         
         // Invalidate the user query to trigger a fresh fetch when needed
         queryClient.invalidateQueries({ queryKey: authKeys.user });

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { SnackbarProvider } from '@/contexts/snackbarContext';
 import ErrorBoundary from '@/components/common/errorBoundary';
 import TopNav from '@/components/layout/TopNav';
+import { isBrowser } from '@/lib/utils';
 
 export default function DashboardLayout({
   children,
@@ -17,13 +18,15 @@ export default function DashboardLayout({
 
   // Check authentication status
   useEffect(() => {
-    const token = localStorage.getItem('token') || 
-                 document.cookie.split('; ').find(row => row.startsWith('token='))?.split('=')[1];
-    
-    if (!token) {
-      router.push('/login');
-    } else {
-      setIsAuthenticated(true);
+    if (isBrowser()) {
+      const token = localStorage.getItem('token') || 
+                   document.cookie.split('; ').find(row => row.startsWith('token='))?.split('=')[1];
+      
+      if (!token) {
+        router.push('/login');
+      } else {
+        setIsAuthenticated(true);
+      }
     }
     setIsLoading(false);
   }, [router]);

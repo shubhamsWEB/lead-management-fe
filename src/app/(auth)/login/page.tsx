@@ -27,11 +27,16 @@ export default function LoginPage() {
 
   const onSubmit = async (data: LoginFormData) => {
     try {
-      const response = await apiLogin({ email: data.email, password: data.password });
+      const response = await apiLogin({
+        email: data.email,
+        password: data.password,
+      });
       
       if (response.success) {
-        // Set the token
-        setToken(response.token);
+        // Only set the token on the client side
+        if (typeof window !== 'undefined') {
+          setToken(response.token);
+        }
         
         // Invalidate the user query to trigger a fresh fetch when needed
         queryClient.invalidateQueries({ queryKey: authKeys.user });
