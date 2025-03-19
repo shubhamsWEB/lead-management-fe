@@ -2,7 +2,6 @@
 
 A modern web application for managing sales leads, featuring user authentication, lead tracking, and efficient data visualization with a responsive design built on Next.js.
 
-![Leads Management App](https://images.unsplash.com/photo-1572021335469-31706a17aaef?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D)
 
 ## Table of Contents
 - [Tech Stack](#tech-stack)
@@ -15,8 +14,6 @@ A modern web application for managing sales leads, featuring user authentication
 - [Project Structure](#project-structure)
 - [API Integration](#api-integration)
 - [Authentication Flow](#authentication-flow)
-- [Contributing](#contributing)
-- [License](#license)
 
 ## Tech Stack
 
@@ -86,10 +83,6 @@ A modern web application for managing sales leads, featuring user authentication
 ### Installation
 
 1. Clone the repository:
-```bash
-git clone https://github.com/your-username/leads-management.git
-cd leads-management
-```
 
 2. Install dependencies:
 ```bash
