@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiLogin, apiRegister, apiGetMe, apiLogout } from '../services/utils/apiHelperClient';
 import { LoginFormData, RegisterFormData } from '@/lib/types';
-import { setToken, removeToken } from '@/lib/utils';
+import { setToken, removeToken, getToken } from '@/lib/utils';
 
 // Keys for React Query cache
 export const authKeys = {
@@ -14,7 +14,10 @@ export function useUser() {
     queryKey: authKeys.user,
     queryFn: apiGetMe,
     retry: false,
+    refetchOnWindowFocus: false,
+    refetchOnMount: true,
     staleTime: 5 * 60 * 1000, // 5 minutes
+    enabled: !!getToken(),
   });
 }
 
@@ -69,4 +72,13 @@ export function useLogout() {
       queryClient.invalidateQueries();
     },
   });
+}
+
+// Utility to get token
+export function getToken() {
+  if (typeof window === 'undefined') return null;
+  
+  return localStorage.getItem('token') || 
+         document.cookie.split('; ').find(row => row.startsWith('token='))?.split('=')[1] || 
+         null;
 } 

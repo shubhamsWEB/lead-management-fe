@@ -9,10 +9,16 @@ import { RegisterFormData } from '@/lib/types';
 import Input from '@/components/common/input';
 import Button from '@/components/common/button';
 import { apiRegister } from '@/services/utils/apiHelperClient';
+import { useQueryClient } from '@tanstack/react-query';
+import { authKeys } from '@/hooks/useAuthQuery';
+import { setToken } from '@/lib/utils';
+
 export default function RegisterPage() {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+  
   const {
     register,
     handleSubmit,
@@ -23,21 +29,32 @@ export default function RegisterPage() {
   const password = watch('password');
 
   const onSubmit = async (data: RegisterFormData) => {
-    console.log("🚀 ~ onSubmit ~ data:", data);
     try {
-      const response = await apiRegister({name: data.name, email: data.email, password: data.password, confirmPassword: data.confirmPassword});
-      console.log("🚀 ~ onSubmit ~ response:", response);
+      const response = await apiRegister({
+        name: data.name, 
+        email: data.email, 
+        password: data.password, 
+        confirmPassword: data.confirmPassword
+      });
+      
       if (response.success) {
-        document.cookie = `token=${response.token}; path=/`;
+        // Set the token
+        setToken(response.token);
+        
+        // Invalidate the user query to trigger a fresh fetch when needed
+        queryClient.invalidateQueries({ queryKey: authKeys.user });
+        
+        // Navigate to the leads page
         router.push('/leads');
       } else {
-        setError(response.message);
+        setError(response.message || 'Registration failed. Please try again.');
       }
     } catch (error) {
       if (error instanceof Error) {
         setError(error.message);
       } else {
         console.error('Registration error:', error);
+        setError('An unexpected error occurred');
       }
     }
   };
