@@ -1,130 +1,54 @@
-import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { apiLogin, apiRegister, apiGetMe, apiLogout } from '../services/utils/apiHelperClient';
-import { AuthState, LoginFormData, RegisterFormData, User } from '../lib/types';
-import { setToken, getToken, removeToken } from '../lib/utils';
-// import { useSnackbar } from '@/contexts/snackbarContext';
+import { useUser, useLogin, useRegister, useLogout } from './useAuthQuery';
+import { LoginFormData, RegisterFormData } from '@/lib/types';
+
 export function useAuth() {
   const router = useRouter();
-  // const { showSnackbar } = useSnackbar();
-  const [state, setState] = useState<AuthState>({
-    user: null,
-    token: null,
-    isAuthenticated: false,
-    isLoading: true,
-  });
+  const { data: user, isLoading, isError } = useUser();
+  const loginMutation = useLogin();
+  const registerMutation = useRegister();
+  const logoutMutation = useLogout();
 
-  // Load user data on mount
-  useEffect(() => {
-    const loadUser = async () => {
-      try {
-        // Check if we have a token stored
-        const token = getToken();
-        if (!token) {
-          setState({ user: null, token: null, isAuthenticated: false, isLoading: false });
-          return;
-        }
-
-        // Try to get current user with the token
-        const response = await apiGetMe();
-        if (response.success) {
-          setState({
-            user: response.data || null,
-            token,
-            isAuthenticated: true,
-            isLoading: false,
-          });
-        }
-      } catch (error) {
-        // Clear invalid token
-        removeToken();
-        setState({ user: null, token: null, isAuthenticated: false, isLoading: false });
-      }
-    };
-
-    loadUser();
-  }, []);
-
-  /**
-   * Login function
-   */
-  const login = useCallback(async (data: LoginFormData) => {
+  const login = async (data: LoginFormData) => {
     try {
-      setState(prev => ({ ...prev, isLoading: true }));
-      // const response = await api.login(data);
-      const response = await apiLogin(data);
+      const response = await loginMutation.mutateAsync(data);
       if (response?.data?.success) {
-        setToken(response?.data?.token);
-
-        setState({
-          user: response?.data?.user || null,
-          token: response?.data?.token || null,
-          isAuthenticated: true,
-          isLoading: false,
-        });
-        // showSnackbar('Login successful', 'success');
-        return true;
-      }
-      // showSnackbar(`${response?.message}`, 'error');
-      return false;
-    } catch (error) {
-      // showSnackbar(`Error creating lead: ${error instanceof Error ? error.message : 'Unknown error'}`, 'error');
-      setState(prev => ({ ...prev, isLoading: false }));
-      throw error;
-    }
-  }, []);
-
-  /**
-   * Register function
-   */
-  const register = useCallback(async (data: RegisterFormData) => {
-    console.log("🚀 ~ register ~ data:", data);
-
-    try {
-      setState(prev => ({ ...prev, isLoading: true }));
-      // const response = await api.register(data);
-      const response = await apiRegister(data);
-      
-      if (response?.data?.success) {
-        setToken(response?.data?.token);
-        setState({
-          user: response?.data?.user || null,
-          token: response?.data?.token || null,
-          isAuthenticated: true,
-          isLoading: false,
-        });
         return true;
       }
       return false;
     } catch (error) {
-      setState(prev => ({ ...prev, isLoading: false }));
-      throw error;
+      console.error('Login error:', error);
+      return false;
     }
-  }, []);
+  };
 
-  /**
-   * Logout function
-   */
-  const logout = useCallback(async () => {
+  const register = async (data: RegisterFormData) => {
     try {
-      await apiLogout();
-      removeToken();
+      const response = await registerMutation.mutateAsync(data);
+      if (response?.data?.success) {
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Registration error:', error);
+      return false;
+    }
+  };
+
+  const logout = async () => {
+    try {
+      await logoutMutation.mutateAsync();
+      router.push('/login');
     } catch (error) {
       console.error('Logout error:', error);
-    } finally {
-      removeToken();
-      setState({
-        user: null,
-        token: null,
-        isAuthenticated: false,
-        isLoading: false,
-      });
       router.push('/login');
     }
-  }, [router]);
+  };
 
   return {
-    ...state,
+    user: user?.data,
+    isAuthenticated: !!user?.data,
+    isLoading,
     login,
     register,
     logout,

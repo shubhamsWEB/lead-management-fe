@@ -1,22 +1,17 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
-import { apiGetAllLeads, apiCreateLead, apiUpdateLead, apiDeleteLead, apiExportLeads } from '../services/utils/apiHelperClient';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { Lead, LeadFilters, LeadFormData, PaginationState } from '../lib/types';
 import { useSnackbar } from '@/contexts/snackbarContext';
 import { useDebounce } from './useDebounce';
+import { useCreateLeadMutation, useUpdateLeadMutation, useDeleteLeadMutation, useExportLeadsMutation, useLeadsQuery, leadKeys } from './useLeadsQuery';
+import { useQueryClient } from '@tanstack/react-query';
+
 /**
  * Custom hook for managing leads data and operations
  */
 export function useLeads() {
-  // State for leads data
-  const [leads, setLeads] = useState<Lead[]>([]);
+  // Reduce state variables by combining related states
   const [selectedLeads, setSelectedLeads] = useState<string[]>([]);
   const { showSnackbar } = useSnackbar();
-  // Loading and error states
-  const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
-  
-  // Track if filters were updated by the debounced search term
-  const filtersUpdatedRef = useRef(false);
   
   // Pagination state
   const [pagination, setPagination] = useState<PaginationState>({
@@ -36,159 +31,119 @@ export function useLeads() {
     sort: 'updatedAt',
     sortOrder: 'desc',
   });
-
+  
+  // React Query hooks
+  const { 
+    data, 
+    isLoading, 
+    isError, 
+    error: queryError 
+  } = useLeadsQuery(filters, pagination);
+  
+  const createLeadMutation = useCreateLeadMutation();
+  const updateLeadMutation = useUpdateLeadMutation();
+  const deleteLeadMutation = useDeleteLeadMutation();
+  const exportLeadsMutation = useExportLeadsMutation();
+  
+  const queryClient = useQueryClient();
+  
   // Update filters when debounced search term changes
   useEffect(() => {
-    setFilters(prev => {
-      // Only mark as updated if the search term actually changed
-      if (prev.search !== debouncedSearchTerm) {
-        filtersUpdatedRef.current = true;
-      }
-      return { ...prev, search: debouncedSearchTerm };
-    });
-    
-    // Reset to first page when search term changes
-    setPagination(prev => ({ ...prev, page: 1 }));
-  }, [debouncedSearchTerm]);
-
-  /**
-   * Fetch leads with current pagination and filters
-   */
-  const fetchLeads = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const response = await apiGetAllLeads({page:pagination.page, limit:pagination.limit, ...filters});
-      
-      if (response?.success) {
-        setLeads(response.data || []);
-        setPagination({
-          page: response.pagination.page,
-          limit: response.pagination.limit,
-          total: response.pagination.total,
-          totalPages: response.pagination.totalPages,
-        });
-      }
-    } catch (error) {
-      setError('Failed to fetch leads');
-      console.error('Error fetching leads:', error);
-    } finally {
-      setLoading(false);
+    if (debouncedSearchTerm !== filters.search) {
+      // Batch the state updates by updating both filters and pagination in one go
+      const newFilters = { ...filters, search: debouncedSearchTerm };
+      setFilters(newFilters);
+      setPagination(prev => ({ ...prev, page: 1 }));
     }
-  }, [pagination.page, pagination.limit, filters]);
+  }, [debouncedSearchTerm, filters]);
+  
+  // Memoize leads data to avoid unnecessary re-renders
+  const leads = useMemo(() => data?.leads || [], [data?.leads]);
+  
+  // Update pagination from React Query data
+  useEffect(() => {
+    if (data?.pagination) {
+      setPagination(prev => {
+        // Only update if values have changed
+        return JSON.stringify(prev) !== JSON.stringify(data.pagination) 
+          ? data.pagination 
+          : prev;
+      });
+    }
+  }, [data?.pagination]);
 
-  /**
-   * Create a new lead
-   */
+  // Simplified CRUD operations with better error handling
   const createLead = useCallback(async (data: LeadFormData) => {
     try {
-      setLoading(true);
-      setError(null);
+      const response = await createLeadMutation.mutateAsync(data);
       
-      const response = await apiCreateLead(data);
+      showSnackbar(
+        response?.success ? 'Lead created successfully' : (response?.message || 'Failed to create lead'),
+        response?.success ? 'success' : 'error'
+      );
       
-      // Check if the response indicates an error despite the 200 status code
-      if (response?.success === false) {
-        // This is an error response with a 200 status code
-        showSnackbar(response?.message, 'error');
-        setError('Failed to create lead');
-        return false;
-      }
-      
-      if (response?.success) {
-        // Add the new lead to the list and refresh
-        showSnackbar('Lead created successfully', 'success');
-        await fetchLeads();
-        return true;
-      }
-      
-      // If we get here, something unexpected happened
-      showSnackbar('Failed to create lead', 'error');
-      return false;
+      return response?.success || false;
     } catch (error) {
-      // This will only catch network errors or other exceptions
-      showSnackbar(`Error creating lead: ${error instanceof Error ? error.message : 'Unknown error'}`, 'error');
-      setError('Failed to create lead');
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      showSnackbar(`Error creating lead: ${errorMessage}`, 'error');
       console.error('Error creating lead:', error);
       return false;
-    } finally {
-      setLoading(false);
     }
-  }, [fetchLeads, showSnackbar]);
+  }, [createLeadMutation, showSnackbar]);
 
   /**
    * Update an existing lead
    */
   const updateLead = useCallback(async (id: string, data: Partial<LeadFormData>) => {
     try {
-      setLoading(true);
-      setError(null);
+      const response = await updateLeadMutation.mutateAsync({ id, data });
       
-      const response = await apiUpdateLead({...data,id});
+      showSnackbar(
+        response?.success ? 'Lead updated successfully' : (response?.message || 'Failed to update lead'),
+        response?.success ? 'success' : 'error'
+      );
       
-      if (response?.success) {
-        // Update the lead in the current list to avoid refetching
-        setLeads(prevLeads => 
-          prevLeads.map(lead => 
-            lead._id === id ? { ...lead, ...response.data } : lead
-          )
-        );
-        showSnackbar('Lead updated successfully', 'success');
-        return true;
-      }
-      showSnackbar(response?.message || 'Failed to update lead', 'error');
-      return false;
+      return response?.success || false;
     } catch (error) {
-      showSnackbar(`Error updating lead: ${error instanceof Error ? error.message : 'Unknown error'}`, 'error');
-      setError('Failed to update lead');
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      showSnackbar(`Error updating lead: ${errorMessage}`, 'error');
       console.error('Error updating lead:', error);
       return false;
-    } finally {
-      setLoading(false);
     }
-  }, [showSnackbar]);
+  }, [updateLeadMutation, showSnackbar]);
 
   /**
    * Delete a lead
    */
   const deleteLead = useCallback(async (id: string) => {
     try {
-      setLoading(true);
-      setError(null);
-      
-      const response = await apiDeleteLead(id);
-      console.log("🚀 ~ deleteLead ~ response:", response);
+      const response = await deleteLeadMutation.mutateAsync(id);
       
       if (response?.success) {
-        // Remove the lead from the current list
-        setLeads(prevLeads => prevLeads.filter(lead => lead._id !== id));
-        // Also remove from selected if selected
+        // Remove from selected if selected
         setSelectedLeads(prev => prev.filter(leadId => leadId !== id));
         showSnackbar('Lead deleted successfully', 'success');
         return true;
       }
+      
       showSnackbar(response?.message || 'Failed to delete lead', 'error');
       return false;
     } catch (error) {
       showSnackbar(`Error deleting lead: ${error instanceof Error ? error.message : 'Unknown error'}`, 'error');
-      setError('Failed to delete lead');
       console.error('Error deleting lead:', error);
       return false;
-    } finally {
-      setLoading(false);
     }
-  }, [showSnackbar]);
+  }, [deleteLeadMutation, showSnackbar]);
 
   /**
    * Export leads as CSV
    */
   const exportLeads = useCallback(async () => {
     try {
-      setLoading(true);
-      setError(null);
-      
-      const blob = await apiExportLeads({...pagination, ...filters});
+      const blob = await exportLeadsMutation.mutateAsync({
+        pagination,
+        filters,
+      });
       
       // Create a download link
       const url = window.URL.createObjectURL(blob);
@@ -203,12 +158,10 @@ export function useLeads() {
       return true;
     } catch (error) {
       showSnackbar(`Error exporting leads: ${error instanceof Error ? error.message : 'Unknown error'}`, 'error');
-      setError('Failed to export leads');
+      console.error('Error exporting leads:', error);
       return false;
-    } finally {
-      setLoading(false);
     }
-  }, [pagination, filters, showSnackbar]);
+  }, [pagination, filters, exportLeadsMutation, showSnackbar]);
 
   /**
    * Toggle lead selection
@@ -225,12 +178,8 @@ export function useLeads() {
    * Toggle select all leads
    */
   const toggleSelectAll = useCallback(() => {
-    if (selectedLeads.length === leads.length) {
-      setSelectedLeads([]);
-    } else {
-      setSelectedLeads(leads.map(lead => lead._id));
-    }
-  }, [leads, selectedLeads.length]);
+    setSelectedLeads(prev => prev.length === leads.length ? [] : leads.map((lead: Lead) => lead._id));
+  }, [leads]);
 
   /**
    * Set search filter (updates immediately for UI, but API calls are debounced)
@@ -253,21 +202,25 @@ export function useLeads() {
     setPagination(prev => ({ ...prev, limit, page: 1 }));
   }, []);
 
-  useEffect(() => {
-    fetchLeads();
-    // Reset the flag after fetching
-    filtersUpdatedRef.current = false;
-  }, [pagination.page, pagination.limit, filters.sort, filters.sortOrder, filters.stage, filters.engaged, filters.search]);
+  // Replace the separate filter and pagination setters with combined functions
+  const setFilterAndPage = useCallback((newFilters: LeadFilters, page: number = 1) => {
+    // Update both states at once without manually invalidating the query
+    setFilters(newFilters);
+    setPagination(prev => ({ ...prev, page }));
+    
+    // Remove the manual invalidation
+    // The query will automatically refetch when the filters or pagination change
+    // because they're part of the query key
+  }, []);
 
   return {
     leads,
-    loading,
-    error,
+    loading: isLoading,
+    error: isError ? (queryError?.message || 'Failed to fetch leads') : null,
     pagination,
     filters,
     selectedLeads,
     searchTerm,
-    fetchLeads,
     createLead,
     updateLead,
     deleteLead,
@@ -278,5 +231,6 @@ export function useLeads() {
     setFilters,
     setPage,
     setLimit,
+    setFilterAndPage,
   };
 }

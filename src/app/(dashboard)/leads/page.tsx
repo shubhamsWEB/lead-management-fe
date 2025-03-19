@@ -1,25 +1,33 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { PlusIcon } from '@heroicons/react/24/outline';
-import { useLeads } from '@/hooks/useLeads';
 import { Lead, LeadFormData } from '@/lib/types';
 import Button from '@/components/common/button';
 import LeadList from '@/components/leads/list';
-import LeadFilters from '@/components/leads/filters';
+import LeadFiltersComponent from '@/components/leads/filters';
 import Dialog from '@/components/common/dialog';
 import LeadForm from '@/components/leads/form';
-
+import { useLeads } from '@/hooks/useLeads';
+import { useSnackbar } from '@/contexts/snackbarContext';
 
 export default function LeadsPage() {
-  // Get leads data and actions from our custom hook
+  // Local state for UI interactions
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [currentLead, setCurrentLead] = useState<Lead | null>(null);
+  const { showSnackbar } = useSnackbar();
+  
+  // Use the useLeads hook to get all lead-related functionality
   const {
     leads,
     loading,
+    error,
     pagination,
     filters,
     selectedLeads,
-    fetchLeads,
+    searchTerm,
     createLead,
     updateLead,
     deleteLead,
@@ -29,99 +37,76 @@ export default function LeadsPage() {
     setSearchFilter,
     setFilters,
     setPage,
-    setLimit,
-    searchTerm,
+    setLimit
   } = useLeads();
-
-  // Local state for UI interactions
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [currentLead, setCurrentLead] = useState<Lead | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-
-  // Fetch leads on initial load
-  useEffect(() => {
-    fetchLeads();
-  }, []);
-
+  
   // Handle adding a new lead
   const handleAddLead = async (data: LeadFormData) => {
-    setIsSubmitting(true);
     try {
       const success = await createLead(data);
       if (success) {
         setShowAddModal(false);
       }
-    } catch (err) {
-      console.log("🚀 ~ handleAddLead ~ err:", err);
-    } finally {
-      setIsSubmitting(false);
+    } catch (error) {
+      console.error(error);
     }
   };
-
+  
   // Handle editing a lead
   const handleEditLead = (lead: Lead) => {
     setCurrentLead(lead);
     setShowEditModal(true);
   };
-
+  
   // Handle updating a lead
-  const handleUpdateLead = async (data: LeadFormData) => {
+  const handleUpdateLead = async (formData: LeadFormData) => {
     if (!currentLead) return;
     
-    setIsSubmitting(true);
     try {
-      const success = await updateLead(currentLead._id, data);
+      const success = await updateLead(currentLead._id, formData);
       if (success) {
         setShowEditModal(false);
       }
-    } catch (err) {
-      console.log("🚀 ~ handleUpdateLead ~ err:", err);
-    } finally {
-      setIsSubmitting(false);
+    } catch (error) {
+      console.error(error);
     }
   };
-
+  
   // Handle deleting a lead
   const handleDeleteClick = (id: string) => {
-    // Find the lead to be deleted
-    const lead = leads.find(lead => lead._id === id);
+    const lead = leads.find((lead: Lead) => lead._id === id);
     if (lead) {
       setCurrentLead(lead);
       setShowDeleteModal(true);
     }
   };
-
+  
   // Confirm and execute lead deletion
   const handleDeleteConfirm = async () => {
     if (!currentLead) return;
     
-    setIsSubmitting(true);
     try {
       const success = await deleteLead(currentLead._id);
       if (success) {
         setShowDeleteModal(false);
       }
-    } catch (err) {
-      console.log("🚀 ~ handleDeleteConfirm ~ err:", err);
-    } finally {
-      setIsSubmitting(false);
+    } catch (error) {
+      console.error(error);
     }
   };
-
+  
   // Handle exporting leads
   const handleExportLeads = async () => {
     try {
       await exportLeads();
-    } catch (err) {
-      console.log("🚀 ~ handleExportLeads ~ err:", err);
+    } catch (error) {
+      console.error(error);
     }
   };
-
-  // Reset filters to default
+  
+  // Handle clearing filters
   const handleClearFilters = () => {
+    setSearchFilter('');
     setFilters({
       search: '',
       sort: 'updatedAt',
@@ -145,6 +130,7 @@ export default function LeadsPage() {
           <Button
             variant="primary"
             onClick={handleExportLeads}
+            isLoading={loading}
           >
             Export All
           </Button>
@@ -152,7 +138,7 @@ export default function LeadsPage() {
       </div>
 
       {/* Search and filters */}
-      <LeadFilters
+      <LeadFiltersComponent
         filters={filters}
         onFilterChange={setFilters}
         onSearchChange={setSearchFilter}
@@ -169,7 +155,7 @@ export default function LeadsPage() {
 
       {/* Leads table */}
       <LeadList
-        leads={leads}
+        leads={leads || []}
         selectedLeads={selectedLeads}
         pagination={pagination}
         loading={loading}
@@ -191,7 +177,7 @@ export default function LeadsPage() {
           <LeadForm
             onSubmit={handleAddLead}
             onCancel={() => setShowAddModal(false)}
-            isSubmitting={isSubmitting}
+            isSubmitting={loading}
           />
         </Dialog>
       )}
@@ -207,7 +193,7 @@ export default function LeadsPage() {
             lead={currentLead}
             onSubmit={handleUpdateLead}
             onCancel={() => setShowEditModal(false)}
-            isSubmitting={isSubmitting}
+            isSubmitting={loading}
           />
         </Dialog>
       )}
@@ -228,14 +214,14 @@ export default function LeadsPage() {
               <Button
                 variant="outline"
                 onClick={() => setShowDeleteModal(false)}
-                disabled={isSubmitting}
+                disabled={loading}
               >
                 Cancel
               </Button>
               <Button
                 variant="danger"
                 onClick={handleDeleteConfirm}
-                isLoading={isSubmitting}
+                isLoading={loading}
               >
                 Delete
               </Button>
